@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Fundamentals Mastery Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #121212;
+            --bg-card: #1e1e1e;
+            --bg-card-hover: #2a2a2a;
+            --text-main: #f5f5f5;
+            --text-muted: #a3a3a3;
+            
+            --correct-bg: rgba(34, 197, 94, 0.08);
+            --correct-border: #22c55e;
+            --correct-text: #4ade80;
+            
+            --wrong-bg: rgba(239, 68, 68, 0.08);
+            --wrong-border: #ef4444;
+            --wrong-text: #f87171;
+
+            --pill-wrong: #451a1a;
+            --pill-right: #143324;
+            --accent-blue: #3b82f6;
+            --accent-hover: #2563eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        /* --- Top Bar & Progress (Hidden initially) --- */
+        .top-bar {
+            width: 100%;
+            max-width: 750px;
+            padding: 1.5rem 0;
+            display: none; /* Controlled via JS */
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .progress-container {
+            display: flex;
+            flex: 1;
+            gap: 4px;
+        }
+
+        .progress-segment {
+            height: 4px;
+            flex: 1;
+            background-color: #333;
+            border-radius: 2px;
+            transition: background-color 0.3s;
+        }
+
+        .progress-segment.active {
+            background-color: var(--accent-blue);
+        }
+
+        .progress-segment.completed {
+            background-color: #6b7280;
+        }
+
+        .stats-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .stat-pill {
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .stat-pill.wrong {
+            background-color: var(--pill-wrong);
+            color: var(--wrong-text);
+        }
+
+        .stat-pill.right {
+            background-color: var(--pill-right);
+            color: var(--correct-text);
+        }
+
+        /* --- Global Containers --- */
+        .quiz-container {
+            width: 100%;
+            max-width: 750px;
+            background-color: var(--bg-card);
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        /* --- Welcome/Intro Screen --- */
+        #introScreen h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 1.05rem;
+        }
+
+        .links-dashboard {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .link-item {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-main);
+            transition: all 0.2s ease;
+        }
+
+        .link-item:hover {
+            background-color: rgba(255, 255, 255, 0.06);
+            border-color: #444;
+            transform: translateX(4px);
+        }
+
+        .link-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .link-action {
+            color: var(--accent-blue);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .social-promo {
+            background: linear-gradient(90deg, rgba(236,72,153,0.1) 0%, rgba(139,92,246,0.1) 100%);
+            border: 1px solid rgba(236,72,153,0.2);
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 2.5rem;
+            font-weight: 500;
+        }
+
+        .social-promo a {
+            color: #f472b6;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* --- Action Buttons --- */
+        .primary-btn {
+            background-color: var(--accent-blue);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 1.1rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            text-align: center;
+        }
+
+        .primary-btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .primary-btn:active {
+            transform: scale(0.99);
+        }
+
+        /* --- Active Quiz View (Hidden initially) --- */
+        #quizArea {
+            display: none;
+        }
+
+        .question-header {
+            display: flex;
+            gap: 1rem;
+            font-size: 1.25rem;
+            line-height: 1.5;
+            margin-bottom: 2.5rem;
+            font-weight: 500;
+        }
+
+        .q-num {
+            min-width: 28px;
+            color: var(--text-muted);
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-card {
+            background-color: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-card:hover:not(.answered) {
+            background-color: var(--bg-card-hover);
+            border-color: #444;
+        }
+
+        .option-content {
+            display: flex;
+            gap: 1rem;
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+
+        .opt-letter {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* --- Feedback Inside Cards --- */
+        .option-card.correct {
+            background-color: var(--correct-bg);
+            border-color: var(--correct-border);
+            cursor: default;
+        }
+
+        .option-card.wrong {
+            background-color: var(--wrong-bg);
+            border-color: var(--wrong-border);
+            cursor: default;
+        }
+
+        .option-card.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .feedback-box {
+            margin-top: 1rem;
+            margin-left: 2.2rem;
+            display: none;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .option-card.correct .feedback-box,
+        .option-card.wrong .feedback-box {
+            display: flex;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .feedback-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .correct .feedback-title { color: var(--correct-text); }
+        .wrong .feedback-title { color: var(--wrong-text); }
+
+        .feedback-text {
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .actions-container {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        #nextBtn {
+            width: auto;
+            padding: 0.8rem 2rem;
+            display: none;
+        }
+
+        /* --- End Screen --- */
+        #endScreen {
+            display: none;
+            text-align: center;
+        }
+
+        .score-display {
+            font-size: 4.5rem;
+            font-weight: 700;
+            color: var(--correct-text);
+            margin: 1.5rem 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar" id="topTrackingBar">
+        <div class="progress-container" id="progressContainer"></div>
+        <div class="stats-container">
+            <span id="progressText">1/25</span>
+            <div class="stat-pill wrong"><span>×</span> <span id="wrongCounter">0</span></div>
+            <div class="stat-pill right"><span>✓</span> <span id="rightCounter">0</span></div>
+        </div>
+    </div>
+
+    <div class="quiz-container" id="introScreen">
+        <h1>JS Fundamentals Mastery</h1>
+        <p class="subtitle">Validate your deep understanding of scope, core structures, and runtime mechanics with this 25-set diagnostic sequence.</p>
+        
+        <div class="links-dashboard">
+            <a href="https://drive.google.com/file/d/1ozo_nsNj3zp85bthCr1jBFSySVibwbP1/view?usp=sharing" target="_blank" class="link-item">
+                <span class="link-title">🧠 Mind Map Generated By Me</span>
+                <span class="link-action">View Asset →</span>
+            </a>
+            <a href="https://www.youtube.com/watch?v=a-wVHL0lpb0&t=2667s" target="_blank" class="link-item">
+                <span class="link-title">📺 Complete Core Video Lecture</span>
+                <span class="link-action">Open Video →</span>
+            </a>
+            <a href="https://www.youtube.com/redirect?event=video_description&redir_token=QUFFLUhqbml5LWp1VlpKMndDQVR1SEVVVUJPZVRwVGFCd3xBQ3Jtc0tsZ2xSODV5T3Rhek1ZTFE1UzBUNU9qYy1Ud3YtVFptT1dBa3QtRVkzSHVnWDFSMTZFWXM0enNXQjVZQU9HQVZYdFdldUpmN0dyUVhyYldFVE8zNTlSX1gxTGlxa29tc3ppVGtTa0pfdUVhZDFKTnpmRQ&q=https%3A%2F%2Fdrive.google.com%2Ffile%2Fd%2F1E89bUb7EwGPVhebj5V03P2Qs-RQwJdny%2Fview%3Fusp%3Dsharing&v=a-wVHL0lpb0" target="_blank" class="link-item">
+                <span class="link-title">📝 Official Notes (Sheryians Coding School)</span>
+                <span class="link-action">Download PDF →</span>
+            </a>
+            <a href="https://github.com/MohitKumawat22/100-DAYS-Challenge-/tree/main/day-5" target="_blank" class="link-item">
+                <span class="link-title">💻 Day 5 Lab Assignment: CLI Calculator Engine</span>
+                <span class="link-action">Inspect Code →</span>
+            </a>
+        </div>
+
+        <div class="social-promo">
+            🚀 Keep up with the build ecosystem! <a href="https://www.instagram.com/curonode_/" target="_blank">Follow @curonode_ on Instagram for more</a>
+        </div>
+
+        <button class="primary-btn" id="startQuizBtn">Start Quiz Engine</button>
+    </div>
+
+    <div class="quiz-container" id="quizArea">
+        <div class="question-header">
+            <span class="q-num" id="qNum">1.</span>
+            <span class="q-text" id="qText">Loading data...</span>
+        </div>
+
+        <div class="options-list" id="optionsContainer"></div>
+
+        <div class="actions-container">
+            <button class="primary-btn next-btn" id="nextBtn">Continue</button>
+        </div>
+    </div>
+
+    <div class="quiz-container" id="endScreen">
+        <h2>Performance Evaluation</h2>
+        <div class="score-display" id="finalScore">0 / 25</div>
+        <p style="color: var(--text-muted); margin-bottom: 2.5rem;">Core programming diagnostics evaluation complete.</p>
+        <button class="primary-btn" style="width: auto; padding: 1rem 2.5rem;" onclick="location.reload()">Reinitialize Diagnostics</button>
+    </div>
+
+    <script>
+        const quizData = [
+            { q: "Which keyword is function-scoped and considered outdated/risky?", options: ["let", "const", "var", "None of the above"], ans: 2, rationale: "var ignores block scope and attaches to the function scope, which frequently leads to unpredictable state bugs." },
+            { q: "Accessing a 'let' variable before its declaration results in a ReferenceError due to:", options: ["Memory leaks", "The Temporal Dead Zone (TDZ)", "Block scoping rules", "Garbage collection"], ans: 1, rationale: "While hoisted, let and const remain in the Temporal Dead Zone until their declaration line executes." },
+            { q: "Can you modify the internal properties of an array or object declared with 'const'?", options: ["Yes, but you cannot reassign the variable itself", "No, it is entirely immutable", "Only if it contains strings", "Only if it contains numbers"], ans: 0, rationale: "const protects the variable binding, not the contents of the object or array it points to." },
+            { q: "Due to a known JavaScript bug, what does 'typeof null' return?", options: ["null", "undefined", "object", "string"], ans: 2, rationale: "This is a famous historical bug in JS. null is a primitive, but typeof returns 'object'." },
+            { q: "What is the data type of NaN (Not a Number)?", options: ["NaN", "undefined", "number", "string"], ans: 2, rationale: "Despite meaning 'Not a Number', it is technically classified as an invalid numeric value, so typeof returns 'number'." },
+            { q: "What is the result of the expression: \"5\" + 1 ?", options: ["6", "\"51\"", "NaN", "TypeError"], ans: 1, rationale: "The + operator favors string concatenation if any operand is a string." },
+            { q: "What is the result of the expression: \"5\" - 1 ?", options: ["4", "\"5-1\"", "NaN", "TypeError"], ans: 0, rationale: "The - operator forces numeric coercion, successfully converting the string '5' into a number." },
+            { q: "Which comparison operator checks both value AND data type strictly?", options: ["==", "!=", "===", "="], ans: 2, rationale: "Strict equality (===) ensures no implicit type coercion happens before comparing." },
+            { q: "Which of the following values is considered 'truthy' in JavaScript?", options: ["0", "\"0\"", "false", "undefined"], ans: 1, rationale: "Any non-empty string is truthy, even if the string literally contains the character '0' or 'false'." },
+            { q: "What does the ** operator do?", options: ["Multiplies by 2", "Exponentiation (power)", "Finds the remainder", "Double assignment"], ans: 1, rationale: "It calculates the base to the exponent power (e.g., 2 ** 3 equals 8)." },
+            { q: "What is a major benefit of using the Early Return pattern in functions?", options: ["It makes the function run faster in the V8 engine", "It avoids deep nesting of if-else statements", "It bypasses the Temporal Dead Zone", "It prevents type coercion"], ans: 1, rationale: "Returning early handles edge cases up front, keeping the main logic flat and readable." },
+            { q: "Which loop structure guarantees execution at least once, even if the condition is false?", options: ["for", "while", "do-while", "for-of"], ans: 2, rationale: "Because the condition is checked at the end of the block, the code inside 'do' always fires once." },
+            { q: "Which loop is best suited for iterating over the VALUES of an array or string?", options: ["for-in", "for-of", "while", "do-while"], ans: 1, rationale: "for-of directly accesses the values of iterable objects, whereas for-in accesses the keys/indexes." },
+            { q: "Which loop is designed for iterating over the KEYS of an object?", options: ["for-in", "for-of", "forEach", "while"], ans: 0, rationale: "for-in loops over the enumerable string properties of an object." },
+            { q: "Can you use 'break' or 'continue' inside an array's forEach() method?", options: ["Yes, anytime", "No, they are not supported in forEach", "Only 'break' is supported", "Only 'continue' is supported"], ans: 1, rationale: "forEach takes a callback function. You cannot break out of it natively; use a standard for-loop or methods like some()." },
+            { q: "Are Function Expressions hoisted to the top of the scope?", options: ["Yes, completely", "No, you cannot call them before they are defined", "Only if declared with let", "Only if declared with const"], ans: 1, rationale: "Only function declarations are hoisted. Function expressions remain uninitialized until execution reaches them." },
+            { q: "Which type of function does NOT have its own 'this' binding?", options: ["Function Declaration", "Function Expression", "Arrow Function", "Generator Function"], ans: 2, rationale: "Arrow functions lexically bind 'this', meaning they inherit it from the surrounding scope." },
+            { q: "What operator is used in a function signature to collect multiple arguments into an array (e.g., ...nums)?", options: ["Spread operator", "Rest parameter", "Destructuring syntax", "Default parameter"], ans: 1, rationale: "When used in the function parameter list, ... acts as the Rest parameter, packing remaining arguments into an array." },
+            { q: "What is the term for a function that remembers its parent lexical scope even after the parent has finished executing?", options: ["Hoisting", "Closure", "Recursion", "IIFE"], ans: 1, rationale: "Closures 'close over' their environment, retaining access to variables from their parent scope." },
+            { q: "Which array method removes the LAST element from an array?", options: ["push()", "pop()", "shift()", "unshift()"], ans: 1, rationale: "pop() removes and returns the last element, while shift() removes the first." },
+            { q: "Which array method modifies (mutates) the original array?", options: ["map()", "filter()", "slice()", "splice()"], ans: 3, rationale: "splice() alters the array in place, whereas map, filter, and slice return new arrays." },
+            { q: "What happens when you call sort() on the array [10, 2, 3] without providing a comparison function?", options: ["It returns [2, 3, 10]", "It sorts lexically, returning [10, 2, 3]", "It sorts descending: [10, 3, 2]", "It throws an error"], ans: 1, rationale: "By default, sort() converts elements to strings. Lexically, '10' comes before '2'." },
+            { q: "When should you use bracket notation instead of dot notation for accessing object properties?", options: ["When accessing fixed key names only.", "Bracket notation is deprecated and should never be used.", "When you have nested objects.", "When using dynamic keys or multi-word keys (e.g., \"full name\")."], ans: 3, rationale: "The text specifically advises using bracket notation for dynamic keys (like variables) or multi-word keys that would break dot notation syntax." },
+            { q: "Which object method returns an array of the object's keys?", options: ["Object.values()", "Object.entries()", "Object.keys()", "Object.get()"], ans: 2, rationale: "Object.keys() returns an array containing the names of all the object's own enumerable properties." },
+            { q: "What is a primary limitation of using JSON.parse(JSON.stringify(obj)) to deep copy an object?", options: ["It only does a shallow copy", "It cannot copy plain data types", "It loses functions, undefined values, and symbols", "It converts arrays into objects"], ans: 2, rationale: "JSON serialization cannot represent functions or undefined, so they are silently stripped out of the copy." }
+        ];
+
+        let currentIndex = 0;
+        let rightAnswers = 0;
+        let wrongAnswers = 0;
+
+        const introScreen = document.getElementById('introScreen');
+        const quizArea = document.getElementById('quizArea');
+        const endScreen = document.getElementById('endScreen');
+        const topTrackingBar = document.getElementById('topTrackingBar');
+        
+        const progressContainer = document.getElementById('progressContainer');
+        const qNum = document.getElementById('qNum');
+        const qText = document.getElementById('qText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressText = document.getElementById('progressText');
+        const rightCounter = document.getElementById('rightCounter');
+        const wrongCounter = document.getElementById('wrongCounter');
+
+        const letters = ['A', 'B', 'C', 'D'];
+
+        // Init Layout Segments
+        for (let i = 0; i < quizData.length; i++) {
+            const seg = document.createElement('div');
+            seg.className = 'progress-segment';
+            progressContainer.appendChild(seg);
+        }
+
+        // Event: Start Quiz Screen Transition
+        document.getElementById('startQuizBtn').onclick = () => {
+            introScreen.style.display = 'none';
+            topTrackingBar.style.display = 'flex';
+            quizArea.style.display = 'block';
+            loadQuestion();
+        };
+
+        function loadQuestion() {
+            const q = quizData[currentIndex];
+            qNum.innerText = `${currentIndex + 1}.`;
+            qText.innerText = q.q;
+            progressText.innerText = `${currentIndex + 1}/${quizData.length}`;
+            nextBtn.style.display = 'none';
+
+            const segments = document.querySelectorAll('.progress-segment');
+            segments.forEach((seg, idx) => {
+                seg.className = 'progress-segment';
+                if (idx < currentIndex) seg.classList.add('completed');
+                if (idx === currentIndex) seg.classList.add('active');
+            });
+
+            optionsContainer.innerHTML = '';
+            q.options.forEach((optText, index) => {
+                const isCorrectAns = (index === q.ans);
+                const card = document.createElement('div');
+                card.className = 'option-card';
+                card.innerHTML = `
+                    <div class="option-content">
+                        <span class="opt-letter">${letters[index]}.</span>
+                        <span class="opt-text">${optText}</span>
+                    </div>
+                    <div class="feedback-box">
+                        <div class="feedback-title">
+                            ${isCorrectAns ? '<span>✓</span> Right answer' : '<span>×</span> Not quite'}
+                        </div>
+                        <div class="feedback-text">${q.rationale}</div>
+                    </div>
+                `;
+                card.onclick = () => handleSelection(card, index, q.ans);
+                optionsContainer.appendChild(card);
+            });
+        }
+
+        function handleSelection(selectedCard, selectedIdx, correctIdx) {
+            const allCards = optionsContainer.querySelectorAll('.option-card');
+            allCards.forEach(card => {
+                card.classList.add('answered');
+                card.style.pointerEvents = 'none';
+            });
+
+            if (selectedIdx === correctIdx) {
+                selectedCard.classList.add('correct');
+                rightAnswers++;
+                rightCounter.innerText = rightAnswers;
+            } else {
+                selectedCard.classList.add('wrong');
+                allCards[correctIdx].classList.add('correct');
+                wrongAnswers++;
+                wrongCounter.innerText = wrongAnswers;
+                
+                allCards.forEach((c, i) => {
+                    if(i !== selectedIdx && i !== correctIdx) c.classList.add('disabled');
+                });
+            }
+
+            nextBtn.style.display = 'block';
+            if (currentIndex === quizData.length - 1) {
+                nextBtn.innerText = "See Final Results";
+            }
+        }
+
+        nextBtn.onclick = () => {
+            currentIndex++;
+            if (currentIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                quizArea.style.display = 'none';
+                topTrackingBar.style.display = 'none';
+                endScreen.style.display = 'block';
+                document.getElementById('finalScore').innerText = `${rightAnswers} / ${quizData.length}`;
+            }
+        };
+    </script>
+</body>
+</html>
